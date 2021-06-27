@@ -897,6 +897,11 @@ BaseCache::access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
     chatty_assert(!(isReadOnly && pkt->isWrite()),
                   "Should never see a write in a read-only cache %s\n",
                   name());
+    //--------------Start Change WriteThrough -------------------------------
+    if(pkt->cmd.isWrite() && (pkt->cmd.isEviction() || pkt->cmd == MemCmd::WriteClean))
+        pkt->setWriteThrough();
+
+    //--------------Finish Change WriteThrough-------------------------------
 
     // Here lat is the value passed as parameter to accessBlock() function
     // that can modify its value.
@@ -1304,12 +1309,6 @@ BaseCache::writecleanBlk(CacheBlk *blk, Request::Flags dest, PacketId id)
 
     PacketPtr pkt = new Packet(req, MemCmd::WriteClean, blkSize, id);
 
-
-    //--------------Start Change WriteThrough -------------------------------
-
-    //dest = true;
-
-    //--------------Finish Change WriteThrough-------------------------------
 
     if (dest) {
         req->setFlags(dest);
